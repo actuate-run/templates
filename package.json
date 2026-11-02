@@ -4,11 +4,14 @@
   "type": "module",
   "description": "First-party Actuate actuator templates.",
   "license": "MIT",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "test": "vitest run",
     "check": "actuate check deposit-reminder/actuator.ts && actuate check support-escalation/actuator.ts && actuate check payment-reconciler/actuator.ts && actuate check github-release-telegram/actuator.ts && actuate check daily-report/actuator.ts",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "env-examples": "node scripts/env-examples.mjs"
   },
   "devDependencies": {
     "@actuate/cli": "link:../actuate/packages/cli",
@@ -16,6 +19,7 @@
     "@actuate/sdk": "link:../actuate/packages/sdk",
     "@types/node": "^22.10.0",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.7"
+    "vitest": "^3.2.7",
+    "@actuate/providers": "link:../actuate/packages/providers"
   }
 }

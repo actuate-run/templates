@@ -19,7 +19,7 @@ Every template folder has:
 
 - `actuator.ts`: the actuator, one file.
 - `README.md`: what it does, its configuration, how to trigger it, and what it waits for.
-- `.env.example`: the provider credentials an operator needs (placeholders only).
+- `.env.example`: provider settings, generated from `@actuate/providers` (`pnpm env-examples`). Copy to `.dev.vars` and uncomment to use real providers locally.
 - `actuate.config.json`: example configuration, used by `actuate dev` and `actuate deploy`.
 
 ## Developing the templates

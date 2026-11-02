@@ -47,3 +47,21 @@ describe("templates", () => {
     });
   });
 });
+
+describe(".env.example files", () => {
+  it("only name variables that @actuate/providers or the runtime actually read", async () => {
+    const { PROVIDERS, envVarsFor } = await import("@actuate/providers");
+    const known = new Set<string>(["ACTUATE_MESSAGING", "ACTUATE_PAYMENT", "ACTUATE_LLM", "ACTUATE_WEBHOOK_SECRET", "ACTUATE_TOKEN", "ACTUATE_CONFIG", "ACTUATE_APPROVAL_SECRET", "ACTUATE_PUBLIC_URL"]);
+    for (const p of Object.values(PROVIDERS)) for (const v of envVarsFor(p.kind)) known.add(v.name);
+    const { readdirSync, readFileSync, existsSync } = await import("node:fs");
+    const root = new URL("..", import.meta.url).pathname;
+    for (const name of readdirSync(root)) {
+      const file = `${root}${name}/.env.example`;
+      if (!existsSync(file)) continue;
+      for (const line of readFileSync(file, "utf8").split("\n")) {
+        const m = /^#?\s*([A-Z][A-Z0-9_]+)=/.exec(line);
+        if (m) expect(known.has(m[1]!), `${name}: ${m[1]}`).toBe(true);
+      }
+    }
+  });
+});

@@ -11,6 +11,9 @@ importers:
       '@actuate/cli':
         specifier: link:../actuate/packages/cli
         version: link:../actuate/packages/cli
+      '@actuate/providers':
+        specifier: link:../actuate/packages/providers
+        version: link:../actuate/packages/providers
       '@actuate/runtime':
         specifier: link:../actuate/packages/runtime
         version: link:../actuate/packages/runtime
