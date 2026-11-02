@@ -38,7 +38,8 @@ export default defineActuator({
     "for its reference, alerting on mismatches. Also accepts {expect: {referenceId, amount, currency}} to register an expected payment.",
   config: ConfigSchema,
   input: InputSchema,
-  capabilities: ["messaging"],
+  // Alerts are optional: without a messaging provider the reconciler still records every payment.
+  optionalCapabilities: ["messaging"],
   async run(ctx, input, config) {
     await ctx.db.migrate([
       `CREATE TABLE expected_payments (reference_id TEXT PRIMARY KEY, amount REAL NOT NULL, currency TEXT NOT NULL, created_at TEXT NOT NULL)`,
@@ -89,7 +90,7 @@ export default defineActuator({
     const mismatch = verdict === "amount_mismatch" || verdict === "currency_mismatch" || verdict === "unexpected";
     if (mismatch && isNew && config.alertTo) {
       await ctx.step.do("alert-mismatch", () =>
-        ctx.messaging.send(
+        ctx.messaging?.send(
           config.alertTo,
           `Payment ${verdict.replace("_", " ")}: ${p.provider} bill ${p.billId} (ref ${p.referenceId}) ` +
             `paid ${p.currency} ${p.amount.toFixed(2)}, expected ${expected ?? "nothing"}. Check the payments table.`,

@@ -19,7 +19,8 @@ for (const name of readdirSync(root)) {
     continue;
   }
   const source = readFileSync(file, "utf8");
-  const declared = /capabilities:\s*\[([^\]]*)\]/.exec(source)?.[1] ?? "";
+  // Required and optional capabilities both need settings to be used.
+  const declared = [...source.matchAll(/apabilities:\s*\[([^\]]*)\]/g)].map((m) => m[1]).join(",");
   const caps = ["messaging", "payment", "llm"].filter((c) => declared.includes(`"${c}"`));
   const lines = [
     `# Provider settings for ${name}. Placeholders only: never commit real values.`,

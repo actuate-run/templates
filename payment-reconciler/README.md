@@ -19,7 +19,7 @@ cd my-bot && npm install && npx actuate dev
 | `alertTo` | `""` | Chat ID, phone or email to alert on a mismatch. Empty records mismatches without alerting. |
 | `amountTolerance` | `0` | Slack, in major units, before an amount difference counts as a mismatch. |
 
-Capability: `messaging`, for alerts. If you never want alerts, you can remove `"messaging"` from `capabilities` and the `alert-mismatch` step.
+Capability: `messaging` (optional), for alerts. Without a messaging provider it still reconciles every payment; mismatches just are not announced.
 
 ## Triggering a run
 
