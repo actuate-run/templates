@@ -50,7 +50,6 @@ pnpm check       # actuate check (replay-safety lint) on every template
 
 The tests in `test/` drive each actuator through `@actuate/runtime`'s `RunManager` with in-memory SQLite, recording fake providers and a fake clock, covering happy paths, timeouts, approvals and webhook redelivery. `test/check.test.ts` also asserts that every template passes `actuate check` with no errors or warnings, stays readable (50 to 130 lines for an agent tool, 60 to 150 for an automation), and ships a config its schema accepts; agent tools must also declare an object `output` schema.
 
-> **Note:** `@actuate/sdk`, `@actuate/runtime` and `@actuate/cli` are not yet published to npm, so `package.json` links them from a sibling checkout of [`actuate-run/actuate`](https://github.com/actuate-run/actuate) (`link:../actuate/packages/*`, with `pnpm -r build` run there first). They become normal semver ranges once the packages publish.
 
 ## Contributing a template
 
