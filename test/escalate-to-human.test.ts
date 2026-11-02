@@ -24,12 +24,13 @@ describe("escalate-to-human", () => {
     expect(h.rows("tickets")[0]).toMatchObject({ id: run.runId, status: "OPEN", urgency: "urgent" });
 
     await h.advance(HOUR);
-    expect(await h.answer("  Yes, until 5pm today. ")).toMatchObject({ ok: true });
+    expect(await h.answer("  Yes, until 5pm today. ", "Siti")).toMatchObject({ ok: true });
     expect(h.run(run.runId).output).toEqual({
       status: "ANSWERED",
       ticketId: run.runId,
       answer: "Yes, until 5pm today.",
       answeredAt: new Date(T0 + HOUR).toISOString(),
+      answeredBy: "Siti",
     });
     expect(h.rows("tickets")[0]).toMatchObject({ status: "ANSWERED", answer: "Yes, until 5pm today." });
   });

@@ -108,7 +108,7 @@ export function harness(actuator: Actuator, opts: { providers?: Partial<Provider
       return manager.decide(token, note === undefined ? {} : { note });
     },
     /** Answer the most recent input request through its signed form link. */
-    answer: (text: string) => manager.decide(tokenOf(approvals.at(-1)!.answerUrl!), { text }),
+    answer: (text: string, by?: string) => manager.decide(tokenOf(approvals.at(-1)!.answerUrl!), { text, ...(by ? { by } : {}) }),
     rows: (table: string) => manager.readTable(table).rows,
   };
 }

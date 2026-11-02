@@ -17,6 +17,7 @@ export const OutputSchema = z.object({
   ticketId: z.string(),
   answer: z.string().optional().describe("The human's answer, verbatim"),
   answeredAt: z.string().optional(),
+  answeredBy: z.string().optional().describe("Who answered, if known (a name typed on the form is self-reported)"),
 });
 
 export default defineActuator({
@@ -63,6 +64,6 @@ export default defineActuator({
         closed_at = ${now} WHERE id = ${ticketId}`,
     );
     if (!answer) return { status: "TIMED_OUT", ticketId };
-    return { status: "ANSWERED", ticketId, answer: answer.text.trim(), answeredAt: answer.at };
+    return { status: "ANSWERED", ticketId, answer: answer.text.trim(), answeredAt: answer.at, ...(answer.by ? { answeredBy: answer.by } : {}) };
   },
 });

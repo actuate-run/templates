@@ -32,7 +32,7 @@ Capability: `messaging`, which delivers the answer link (Telegram, WhatsApp or e
 The call returns `WAITING` with a `runId` (the ticket ID). The agent tells the customer it is checking, then polls `actuate_get_run`:
 
 ```json
-{ "status": "ANSWERED", "ticketId": "run_019a...", "answer": "Yes, until 5pm today.", "answeredAt": "2026-11-02T03:12:40.000Z" }
+{ "status": "ANSWERED", "ticketId": "run_019a...", "answer": "Yes, until 5pm today.", "answeredAt": "2026-11-02T03:12:40.000Z", "answeredBy": "Siti" }
 ```
 
 or `{ "status": "TIMED_OUT", "ticketId": "run_019a..." }`, in which case the agent should say a person will follow up.
