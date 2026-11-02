@@ -50,7 +50,7 @@ curl -X POST localhost:8787/run -H 'content-type: application/json' -d '{
 
 | Event | Sent by | Effect |
 | --- | --- | --- |
-| `payment.<runId>` | Your payment provider's webhook, normalised by Actuate. The bill's `referenceId` is the run ID. | Confirms the booking. |
+| `payment.<runId>` | Your payment provider's webhook as a `PaymentEvent`. The bill's `referenceId` is the run ID. | `status: "paid"` confirms the booking; anything else counts as not paid yet. |
 
 Locally, `actuate dev` prints the payment link; opening it posts the `payment.<runId>` event, so you can click your way through the happy path. To test the reminder path, wait for `reminderDelay` or set it to `30 minutes`.
 
