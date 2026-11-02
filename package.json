@@ -14,12 +14,12 @@
     "env-examples": "node scripts/env-examples.mjs"
   },
   "devDependencies": {
-    "@actuate/cli": "link:../actuate/packages/cli",
-    "@actuate/runtime": "link:../actuate/packages/runtime",
-    "@actuate/sdk": "link:../actuate/packages/sdk",
+    "@actuate/cli": "^0.1.0",
+    "@actuate/runtime": "^0.1.0",
+    "@actuate/sdk": "^0.1.0",
     "@types/node": "^22.10.0",
     "typescript": "^5.9.3",
     "vitest": "^3.2.7",
-    "@actuate/providers": "link:../actuate/packages/providers"
+    "@actuate/providers": "^0.1.0"
   }
 }
