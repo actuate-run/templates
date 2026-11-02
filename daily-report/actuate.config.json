@@ -1,0 +1,7 @@
+{
+  "reportTo": "your-chat-id",
+  "title": "Daily report",
+  "timeZone": "Asia/Kuala_Lumpur",
+  "topTypes": 5,
+  "skipEmpty": false
+}
