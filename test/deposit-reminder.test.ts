@@ -36,7 +36,7 @@ describe("deposit-reminder", () => {
     const run = await h.start(input);
     await h.advance(30 * 60_000);
     expect(sent[1]!.text).toMatch(/^Reminder: your MYR 50.00 deposit/);
-    await h.manager.deliverEvent(`payment.${run.runId}`, {});
+    await h.manager.deliverEvent(`payment.${run.runId}`, { provider: "test", status: "paid", referenceId: run.runId });
     expect(h.rows("bookings")[0]).toMatchObject({ status: "CONFIRMED" });
   });
 
@@ -57,7 +57,7 @@ describe("deposit-reminder", () => {
   it("skips the day-before reminder when the appointment is less than a day away", async () => {
     const { h, sent } = setup();
     const run = await h.start({ ...input, appointmentIso: new Date(T0 + 6 * HOUR).toISOString() });
-    await h.manager.deliverEvent(`payment.${run.runId}`, {});
+    await h.manager.deliverEvent(`payment.${run.runId}`, { provider: "test", status: "paid", referenceId: run.runId });
     expect(h.run(run.runId)).toMatchObject({ status: "COMPLETED", output: { status: "CONFIRMED" } });
     expect(sent).toHaveLength(2);
   });
@@ -65,5 +65,13 @@ describe("deposit-reminder", () => {
   it("rejects a malformed appointment time before running", async () => {
     const { h } = setup();
     await expect(h.start({ ...input, appointmentIso: "tomorrow" })).rejects.toThrow();
+  });
+
+  it("treats a failed payment as unpaid and reminds", async () => {
+    const { h, sent } = setup();
+    const run = await h.start(input);
+    await h.manager.deliverEvent(`payment.${run.runId}`, { provider: "test", status: "failed", referenceId: run.runId });
+    expect(sent.some((m) => m.text.startsWith("Reminder:"))).toBe(true);
+    expect(h.manager.getRun(run.runId)!.status).toBe("WAITING");
   });
 });

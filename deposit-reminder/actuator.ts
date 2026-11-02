@@ -1,4 +1,4 @@
-import { defineActuator, z } from "@actuate/sdk";
+import { defineActuator, z, type PaymentEvent } from "@actuate/sdk";
 
 export const ConfigSchema = z.object({
   businessName: z.string().default("Klinik Pergigian Senyum"),
@@ -64,21 +64,22 @@ export default defineActuator({
     });
 
     // The payment provider's webhook arrives as the event `payment.<referenceId>`.
-    let paid = await ctx.step.waitForEvent("wait-for-deposit", {
+    // A failed card attempt also arrives here; it counts as not paid yet.
+    let paid = await ctx.step.waitForEvent<PaymentEvent>("wait-for-deposit", {
       event: `payment.${bookingId}`,
       timeout: config.reminderDelay,
     });
-    if (paid === null) {
+    if (paid?.status !== "paid") {
       await ctx.step.do("send-payment-reminder", () =>
         ctx.messaging.send(input.contact, `Reminder: your ${deposit} deposit for ${when} is still pending. Pay here: ${payUrl}`),
       );
-      paid = await ctx.step.waitForEvent("wait-for-deposit-after-reminder", {
+      paid = await ctx.step.waitForEvent<PaymentEvent>("wait-for-deposit-after-reminder", {
         event: `payment.${bookingId}`,
         timeout: config.holdAfterReminder,
       });
     }
 
-    if (paid === null) {
+    if (paid?.status !== "paid") {
       await ctx.step.do("release-slot", async () => {
         await ctx.db.sql`UPDATE bookings SET status = 'EXPIRED', updated_at = ${new Date().toISOString()} WHERE id = ${bookingId}`;
         await ctx.messaging.send(input.contact, `We didn't receive your deposit, so your ${when} slot has been released. Reply to rebook.`);
