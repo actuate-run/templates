@@ -31,6 +31,7 @@ export default defineActuator({
   input: InputSchema,
   output: OutputSchema,
   capabilities: ["messaging"],
+  hints: { openWorld: true },
   async run(ctx, input, config): Promise<z.output<typeof OutputSchema>> {
     const messageId = ctx.runId;
     await ctx.db.migrate([
@@ -49,7 +50,7 @@ export default defineActuator({
     const review = await ctx.step.waitForApproval("human-review", {
       message:
         `Message to ${input.to}${input.context ? ` (${input.context})` : ""}:\n\n${input.draft}\n\n` +
-        "Approve to send as is. To send an edited version, approve from the dashboard with your text as the note.",
+        "Approve to send as is. To send an edited version, put the full corrected message in the note and approve.",
       notify: config.approver,
       timeout: config.approvalTimeout,
     });

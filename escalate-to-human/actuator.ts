@@ -15,29 +15,29 @@ export const InputSchema = z.object({
 export const OutputSchema = z.object({
   status: z.enum(["ANSWERED", "TIMED_OUT"]),
   ticketId: z.string(),
-  answer: z.string().optional(),
-  answeredBy: z.string().optional(),
+  answer: z.string().optional().describe("The human's answer, verbatim"),
+  answeredAt: z.string().optional(),
 });
-
-/** What the human posts as the `answer.<ticketId>` event. */
-const Answer = z.object({ answer: z.string().min(1), by: z.string().optional() });
 
 export default defineActuator({
   name: "escalate_to_human",
   description:
     "Ask a human when you cannot or should not answer yourself: account-specific questions, judgement calls, " +
-    "anything you are not sure is true. Creates a ticket and notifies a person. Returns WAITING; poll actuate_get_run " +
-    "for ANSWERED with the human's answer (relay it faithfully), or TIMED_OUT, in which case tell the customer a " +
-    "person will follow up. Do not invent an answer while waiting.",
+    "anything you are not sure is true. Creates a ticket and sends a person a link to answer it. Returns WAITING; " +
+    "poll actuate_get_run for ANSWERED with the human's answer (relay it faithfully), or TIMED_OUT, in which case " +
+    "tell the customer a person will follow up. Do not invent an answer while waiting.",
   config: ConfigSchema,
   input: InputSchema,
   output: OutputSchema,
+  // messaging delivers the answer link.
   capabilities: ["messaging"],
+  // Each call opens a new ticket and pings a person, so a repeat is not harmless.
+  hints: { openWorld: true },
   async run(ctx, input, config): Promise<z.output<typeof OutputSchema>> {
     const ticketId = ctx.runId;
     await ctx.db.migrate([
       `CREATE TABLE tickets (id TEXT PRIMARY KEY, question TEXT NOT NULL, customer_name TEXT NOT NULL, context TEXT NOT NULL,
-         urgency TEXT NOT NULL, status TEXT NOT NULL, answer TEXT, answered_by TEXT, created_at INTEGER NOT NULL, closed_at INTEGER)`,
+         urgency TEXT NOT NULL, status TEXT NOT NULL, answer TEXT, created_at INTEGER NOT NULL, closed_at INTEGER)`,
     ]);
 
     await ctx.step.do("create-ticket", ({ now }) =>
@@ -45,26 +45,24 @@ export default defineActuator({
         VALUES (${ticketId}, ${input.question}, ${input.customerName}, ${input.context}, ${input.urgency}, 'OPEN', ${now})`,
     );
 
-    await ctx.step.do("notify-human", { retries: 3 }, () =>
-      ctx.messaging.send(
-        config.humanContact,
+    // The person gets a signed link to a short form; their text comes back here.
+    const reply = await ctx.step.waitForInput("human-answer", {
+      prompt:
         `${input.urgency === "urgent" ? "🚨 URGENT: " : ""}An agent needs a human answer (ticket ${ticketId})` +
-          `${input.customerName ? ` for ${input.customerName}` : ""}.\n\nQuestion: ${input.question}` +
-          `${input.context ? `\n\nContext: ${input.context}` : ""}` +
-          `\n\nAnswer within ${config.answerTimeout} by posting the event answer.${ticketId} with {"answer": "..."}.`,
-      ),
-    );
-
-    const posted = await ctx.step.waitForEvent("wait-for-answer", { event: `answer.${ticketId}`, timeout: config.answerTimeout });
-    // A malformed post is treated like no answer: the agent never relays something that isn't one.
-    const parsed = Answer.safeParse(posted);
-    const answer = parsed.success ? parsed.data : null;
+        `${input.customerName ? ` for ${input.customerName}` : ""}.\n\nQuestion: ${input.question}` +
+        `${input.context ? `\n\nContext: ${input.context}` : ""}`,
+      notify: config.humanContact,
+      maxLength: 2000,
+      timeout: config.answerTimeout,
+    });
+    // Belt and braces: the form refuses blank answers, and the agent never relays one either.
+    const answer = reply?.text.trim() ? reply : null;
 
     await ctx.step.do("close-ticket", ({ now }) =>
-      ctx.db.sql`UPDATE tickets SET status = ${answer ? "ANSWERED" : "TIMED_OUT"}, answer = ${answer?.answer ?? null},
-        answered_by = ${answer?.by ?? null}, closed_at = ${now} WHERE id = ${ticketId}`,
+      ctx.db.sql`UPDATE tickets SET status = ${answer ? "ANSWERED" : "TIMED_OUT"}, answer = ${answer?.text.trim() ?? null},
+        closed_at = ${now} WHERE id = ${ticketId}`,
     );
     if (!answer) return { status: "TIMED_OUT", ticketId };
-    return { status: "ANSWERED", ticketId, answer: answer.answer, ...(answer.by ? { answeredBy: answer.by } : {}) };
+    return { status: "ANSWERED", ticketId, answer: answer.text.trim(), answeredAt: answer.at };
   },
 });

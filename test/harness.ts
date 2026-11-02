@@ -3,6 +3,8 @@ import { z, type Actuator, type Bill, type CreateBillRequest, type LlmRequest, t
 import { vi } from "vitest";
 import { RunManager, executePass, nodeSqlite, type ApprovalRequest } from "@actuate/runtime";
 
+const tokenOf = (url: string) => new URL(url).searchParams.get("token")!;
+
 export const T0 = Date.parse("2026-11-02T00:00:00Z");
 export const HOUR = 3_600_000;
 export const DAY = 24 * HOUR;
@@ -99,12 +101,14 @@ export function harness(actuator: Actuator, opts: { providers?: Partial<Provider
       const { run: started } = await manager.start({ input: actuator.input.parse(input) as never, trigger });
       return started;
     },
-    /** Approve or reject the most recent approval request through its signed link. */
-    decide: (approve: boolean) => {
+    /** Approve or reject the most recent approval request through its signed link, optionally with a note. */
+    decide: (approve: boolean, note?: string) => {
       const request = approvals.at(-1)!;
-      const token = new URL(approve ? request.approveUrl : request.rejectUrl).searchParams.get("token")!;
-      return manager.decide(token);
+      const token = tokenOf((approve ? request.approveUrl : request.rejectUrl)!);
+      return manager.decide(token, note === undefined ? {} : { note });
     },
+    /** Answer the most recent input request through its signed form link. */
+    answer: (text: string) => manager.decide(tokenOf(approvals.at(-1)!.answerUrl!), { text }),
     rows: (table: string) => manager.readTable(table).rows,
   };
 }

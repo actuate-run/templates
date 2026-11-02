@@ -8,6 +8,8 @@ save → wait for reply until sendAt ─┬─ reply → CANCELLED
                                     └─ sendAt → send → SENT
 ```
 
+The wait is one `waitForEvent({ event: "reply.<runId>", until: sendAt })`: it sleeps until the send time, and a reply ends it early. If `maxDaysAhead` is longer than your plan's longest wait, the run fails loudly instead of sending early.
+
 ```sh
 npm create actuate my-bot -- --template schedule-follow-up
 cd my-bot && npm install && npx actuate dev
@@ -40,6 +42,8 @@ A good one returns `WAITING` with a `runId`; later `actuate_get_run` returns `SE
 ```json
 { "status": "SENT", "followUpId": "run_019a...", "sendAt": "2026-11-20T02:00:00.000Z" }
 ```
+
+The tool is annotated `openWorld` (it messages customers) and not `idempotent`: calling it twice schedules two messages.
 
 To cancel a follow-up yourself, cancel the run from the dashboard (or `POST /runs/<runId>/cancel`).
 

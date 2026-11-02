@@ -22,10 +22,10 @@ describe("approve-message", () => {
     expect(h.rows("outgoing_messages")[0]).toMatchObject({ status: "SENT", sent_text: call.draft });
   });
 
-  it("sends the reviewer's edit when they approve with a note", async () => {
+  it("sends the reviewer's edit when they approve through the link with a note", async () => {
     const { h, sent } = setup();
     const run = await h.start(call);
-    await h.manager.decideDirect(run.runId, "human-review", true, "Sorry about the delay. Here is 10% off your next order.");
+    await h.decide(true, "Sorry about the delay. Here is 10% off your next order.");
     expect(sent[0]!.text).toBe("Sorry about the delay. Here is 10% off your next order.");
     expect(h.run(run.runId).output).toMatchObject({ status: "SENT", edited: true });
   });
@@ -33,7 +33,7 @@ describe("approve-message", () => {
   it("never sends a rejected or expired message", async () => {
     const rejected = setup();
     const run = await rejected.h.start(call);
-    await rejected.h.manager.decideDirect(run.runId, "human-review", false, "We don't discount for this");
+    await rejected.h.decide(false, "We don't discount for this");
     expect(rejected.h.run(run.runId).output).toEqual({ status: "REJECTED", messageId: run.runId, edited: false, reviewerNote: "We don't discount for this" });
 
     const expired = setup();

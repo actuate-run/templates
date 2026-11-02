@@ -44,9 +44,27 @@ describe("templates", () => {
         expect(actuator.output).toBeDefined();
         expect(z.toJSONSchema(actuator.output!, { io: "output" })).toMatchObject({ type: "object" });
         expect(actuator.description.length).toBeGreaterThan(150);
+        expect(actuator.hints, "MCP tool hints").toBeDefined();
         expect(readFileSync(join(dir, "README.md"), "utf8")).toContain("## How an agent uses this");
       });
     }
+
+    it("has no hand-written regex with nested quantifiers (the deploy check rejects them)", async () => {
+      const { default: actuator } = (await import(`../${name}/actuator.ts`)) as { default: Actuator };
+      // Same rule as the platform's validatePatterns; zod's built-in formats (which carry `format`) are allowed.
+      const NESTED = /\((?:[^()\\]|\\.)*[+*}](?:[^()\\]|\\.)*\)(?:[+*]|\{\d*,)/;
+      const bad: string[] = [];
+      const walk = (node: unknown): void => {
+        if (!node || typeof node !== "object") return;
+        const obj = node as Record<string, unknown>;
+        if (typeof obj.pattern === "string" && !obj.format && NESTED.test(obj.pattern)) bad.push(obj.pattern);
+        Object.values(obj).forEach(walk);
+      };
+      for (const schema of [actuator.input, actuator.config, actuator.output]) {
+        if (schema) walk(z.toJSONSchema(schema, { io: "input", unrepresentable: "any" }));
+      }
+      expect(bad).toEqual([]);
+    });
 
     it("ships an actuate.config.json that its ConfigSchema accepts", async () => {
       const { default: actuator } = (await import(`../${name}/actuator.ts`)) as { default: Actuator };

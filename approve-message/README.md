@@ -40,13 +40,15 @@ The call returns `WAITING` with a `runId`. After the reviewer decides, `actuate_
 
 or `{ "status": "REJECTED", "reviewerNote": "We don't discount for this", ... }`, which the agent can use to redraft.
 
+The tool is annotated `openWorld` (it messages customers) and not `idempotent`: each call is a new draft for review.
+
 ## What it waits for
 
 | Wait | Resolved by | Timeout |
 | --- | --- | --- |
-| `human-review` | The signed approve / reject links (send as is), or the dashboard's approval queue, where a note can be added. Approving **with a note sends the note instead of the draft**; rejecting with a note passes it back to the agent. | `approvalTimeout` → EXPIRED |
+| `human-review` | The reviewer opening the signed link and clicking Approve or Reject. The page has a note box: approving **with a note sends the note instead of the draft**; rejecting with a note passes it back to the agent. The dashboard's approval queue works the same way. | `approvalTimeout` → EXPIRED |
 
-Over the API: `POST /runs/<runId>/approvals/human-review/approve` with `{"note": "edited text"}`.
+So the whole edit happens on the link the reviewer already got: paste the corrected message into the note and approve. Over the API: `POST /runs/<runId>/approvals/human-review/approve` with `{"note": "edited text"}`.
 
 ## Data
 

@@ -33,6 +33,7 @@ export default defineActuator({
   input: InputSchema,
   output: OutputSchema,
   capabilities: ["messaging"],
+  hints: { openWorld: true },
   async run(ctx, input, config): Promise<z.output<typeof OutputSchema>> {
     const followUpId = ctx.runId;
     const sendAt = Date.parse(input.sendAt);
@@ -54,7 +55,7 @@ export default defineActuator({
       const reason = tooSoon
         ? `sendAt must be at least ${config.minMinutesAhead} minutes in the future.`
         : tooFar ? `sendAt must be within ${config.maxDaysAhead} days.` : "";
-      return { ok: !reason, reason, waitMs: sendAt - now };
+      return { ok: !reason, reason };
     });
     if (!check.ok) return result("INVALID_TIME", check.reason);
 
@@ -64,15 +65,13 @@ export default defineActuator({
       ctx.db.sql`INSERT INTO follow_ups VALUES (${followUpId}, ${input.contact}, ${sendAt}, ${input.message}, 'SCHEDULED', ${now})`,
     );
 
-    // A sleep can't be interrupted, so wait for the customer's reply with the send time as the timeout.
-    const reply = await ctx.step.waitForEvent("wait-for-reply", { event: `reply.${followUpId}`, timeout: check.waitMs });
+    // Sleep until sendAt, unless the customer replies first.
+    const reply = await ctx.step.waitForEvent("wait-for-reply", { event: `reply.${followUpId}`, until: sendAt });
     if (reply !== null) {
       await setStatus("mark-cancelled", "CANCELLED");
       return result("CANCELLED", "The customer replied first.");
     }
 
-    // A no-op unless the plan's longest wait cut the wait short: then sleep the rest.
-    await ctx.step.sleepUntil("until-send-time", sendAt);
     await ctx.step.do("send-follow-up", () => ctx.messaging.send(input.contact, input.message));
     await setStatus("mark-sent", "SENT");
     return result("SENT");

@@ -58,6 +58,8 @@ Omit `orderId` to get the customer's most recent orders. A wrong email returns `
 
 This actuator does not wait for events.
 
+The tool is annotated `readOnly` and `idempotent`, so clients can call it without asking.
+
 ## Data
 
 Table `orders`: `order_id`, `email` (lower-cased), `status`, `total`, `currency`, `items`, `tracking_url`, `updated_at`.

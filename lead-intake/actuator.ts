@@ -31,6 +31,7 @@ export default defineActuator({
   input: InputSchema,
   output: OutputSchema,
   capabilities: ["messaging"],
+  hints: { openWorld: true },
   async run(ctx, { name, email, interest }, config): Promise<z.output<typeof OutputSchema>> {
     const id = ctx.runId;
     await ctx.db.migrate([

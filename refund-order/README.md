@@ -51,6 +51,8 @@ Above it, the tool returns a receipt with status `WAITING` and a `runId`; the ag
 
 Send an `Idempotency-Key` with the call (MCP clients that retry do) and a retried call returns the first run's result instead of starting another.
 
+The tool is annotated `destructive` and `openWorld` (it moves money), so MCP clients that ask a person before such calls will. It is not marked `idempotent`; the once-per-order check is a safeguard, not a promise.
+
 ## What it waits for
 
 | Wait | Resolved by | Timeout |

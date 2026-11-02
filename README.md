@@ -9,16 +9,16 @@ cd my-bot && npm install && npx actuate dev
 
 ## Agent tools
 
-Small, MCP-first tools an AI agent calls. Each one is the deterministic half of an agent: the model decides *what* should happen, and the actuator decides *how*, with caps, approvals, validation and an audit trail the model cannot change. Every tool has an `output` schema, so MCP clients get `structuredContent`.
+Small, MCP-first tools an AI agent calls. Each one is the deterministic half of an agent: the model decides *what* should happen, and the actuator decides *how*, with caps, approvals, validation and an audit trail the model cannot change. Every tool has an `output` schema, so MCP clients get `structuredContent`, and MCP `hints` (read-only, destructive, open-world) so clients know which calls need a person's OK.
 
 | Template | Tool | What it does | Leans on |
 | --- | --- | --- | --- |
 | [`refund-order`](refund-order) | `refund_order` | Refunds an order: amount capped in code, manager approval above a threshold, once per order, audit row. | `waitForApproval`, idempotency key |
 | [`lead-intake`](lead-intake) | `lead_intake` | Saves a lead, emails day 1 and day 3, stops when they reply; REPLIED or COLD. | `waitForEvent` |
 | [`order-status`](order-status) | `order_status` | Read-only order lookup over the actuator's own SQLite, scoped to the customer's email. | parameterised `ctx.db` |
-| [`schedule-follow-up`](schedule-follow-up) | `schedule_follow_up` | Sends a message at a validated future time unless the customer replies first. | `waitForEvent`, `sleepUntil` |
+| [`schedule-follow-up`](schedule-follow-up) | `schedule_follow_up` | Sends a message at a validated future time unless the customer replies first. | `waitForEvent({ until })` |
 | [`approve-message`](approve-message) | `approve_message` | A person approves, edits or rejects the agent's draft before anything is sent. | `waitForApproval` |
-| [`escalate-to-human`](escalate-to-human) | `escalate_to_human` | Opens a ticket, asks a person, and returns their answer (or a clear timeout). | `waitForEvent` |
+| [`escalate-to-human`](escalate-to-human) | `escalate_to_human` | Opens a ticket, asks a person, and returns their answer (or a clear timeout). | `waitForInput` |
 
 ## Automations
 

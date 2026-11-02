@@ -44,6 +44,8 @@ export default defineActuator({
   config: ConfigSchema,
   input: InputSchema,
   output: OutputSchema,
+  // Lookups never write; the webhook-only upsert is not reachable over MCP.
+  hints: { readOnly: true, idempotent: true },
   async run(ctx, input, config): Promise<z.output<typeof OutputSchema>> {
     await ctx.db.migrate([
       `CREATE TABLE orders (order_id TEXT PRIMARY KEY, email TEXT NOT NULL, status TEXT NOT NULL, total REAL NOT NULL,

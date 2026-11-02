@@ -37,6 +37,7 @@ export default defineActuator({
   output: OutputSchema,
   // messaging delivers the manager's approval link.
   capabilities: ["payment", "messaging"],
+  hints: { destructive: true, openWorld: true },
   async run(ctx, input, config): Promise<z.output<typeof OutputSchema>> {
     const { orderId } = input;
     await ctx.db.migrate([

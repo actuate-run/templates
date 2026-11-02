@@ -36,6 +36,8 @@ The email is validated before anything runs, so a made-up address is rejected wi
 { "leadId": "run_019a...", "status": "REPLIED" }
 ```
 
+The tool is annotated `openWorld` (it emails people) and not `idempotent`: calling it twice starts two sequences.
+
 ## Events it waits for
 
 | Event | Sent by | Effect |
