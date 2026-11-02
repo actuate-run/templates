@@ -1,0 +1,7 @@
+{
+  "currency": "MYR",
+  "approvalThreshold": 50,
+  "maxRefund": 500,
+  "approver": "@shop_manager",
+  "approvalTimeout": "24 hours"
+}

@@ -2,20 +2,17 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { checkSource } from "@actuate/cli";
-import type { Actuator } from "@actuate/sdk";
+import { z, type Actuator } from "@actuate/sdk";
 
 const root = join(import.meta.dirname, "..");
+/** MCP-first tools an agent calls; the landing page links these folder names. */
+const AGENT_TOOLS = ["refund-order", "lead-intake", "order-status", "schedule-follow-up", "approve-message", "escalate-to-human"];
+const AUTOMATIONS = ["deposit-reminder", "support-escalation", "payment-reconciler", "github-release-telegram", "daily-report"];
 const templates = readdirSync(root).filter((d) => existsSync(join(root, d, "actuator.ts")));
 
 describe("templates", () => {
-  it("ships the five Stage 1 templates", () => {
-    expect(templates.sort()).toEqual([
-      "daily-report",
-      "deposit-reminder",
-      "github-release-telegram",
-      "payment-reconciler",
-      "support-escalation",
-    ]);
+  it("ships the six agent tools and the five automations", () => {
+    expect(templates.sort()).toEqual([...AGENT_TOOLS, ...AUTOMATIONS].sort());
   });
 
   describe.each(templates)("%s", (name) => {
@@ -34,11 +31,22 @@ describe("templates", () => {
       }
     });
 
-    it("stays readable (60-150 lines)", () => {
+    const [min, max] = AGENT_TOOLS.includes(name) ? [50, 130] : [60, 150];
+    it(`stays readable (${min}-${max} lines)`, () => {
       const lines = source.trimEnd().split("\n").length;
-      expect(lines).toBeGreaterThanOrEqual(60);
-      expect(lines).toBeLessThanOrEqual(150);
+      expect(lines).toBeGreaterThanOrEqual(min);
+      expect(lines).toBeLessThanOrEqual(max);
     });
+
+    if (AGENT_TOOLS.includes(name)) {
+      it("is an MCP-ready agent tool: object output schema and a model-facing description", async () => {
+        const { default: actuator } = (await import(`../${name}/actuator.ts`)) as { default: Actuator };
+        expect(actuator.output).toBeDefined();
+        expect(z.toJSONSchema(actuator.output!, { io: "output" })).toMatchObject({ type: "object" });
+        expect(actuator.description.length).toBeGreaterThan(150);
+        expect(readFileSync(join(dir, "README.md"), "utf8")).toContain("## How an agent uses this");
+      });
+    }
 
     it("ships an actuate.config.json that its ConfigSchema accepts", async () => {
       const { default: actuator } = (await import(`../${name}/actuator.ts`)) as { default: Actuator };

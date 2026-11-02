@@ -9,7 +9,7 @@
   },
   "scripts": {
     "test": "vitest run",
-    "check": "actuate check deposit-reminder/actuator.ts && actuate check support-escalation/actuator.ts && actuate check payment-reconciler/actuator.ts && actuate check github-release-telegram/actuator.ts && actuate check daily-report/actuator.ts",
+    "check": "for f in */actuator.ts; do actuate check $f || exit 1; done",
     "typecheck": "tsc -p tsconfig.json",
     "env-examples": "node scripts/env-examples.mjs"
   },

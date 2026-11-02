@@ -8,7 +8,11 @@ import { PROVIDERS, envVarsFor } from "@actuate/providers";
 /** The provider each template uses by default for each capability. */
 const DEFAULTS = { messaging: "telegram", payment: "billplz", llm: "anthropic" };
 /** Per-template overrides (e.g. Stripe for support refunds, since it supports them). */
-const OVERRIDES = { "support-escalation": { payment: "stripe" } };
+const OVERRIDES = {
+  "support-escalation": { payment: "stripe" },
+  "refund-order": { payment: "stripe" },
+  "lead-intake": { messaging: "resend" },
+};
 
 const root = new URL("..", import.meta.url).pathname;
 for (const name of readdirSync(root)) {
