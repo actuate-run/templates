@@ -1,0 +1,9 @@
+{
+  "businessName": "Kedai Kopi Aina",
+  "currency": "MYR",
+  "approvalThreshold": 50,
+  "maxRefund": 500,
+  "approver": "your-manager-chat-id",
+  "supportTeam": "your-support-team-chat-id",
+  "approvalTimeout": "24 hours"
+}

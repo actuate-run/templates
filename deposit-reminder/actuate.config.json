@@ -1,0 +1,8 @@
+{
+  "businessName": "Klinik Pergigian Senyum",
+  "depositAmount": 50,
+  "currency": "MYR",
+  "reminderDelay": "2 hours",
+  "holdAfterReminder": "24 hours",
+  "timeZone": "Asia/Kuala_Lumpur"
+}

@@ -1,0 +1,6 @@
+{
+  "chatId": "your-telegram-chat-id",
+  "includePrereleases": false,
+  "includeDrafts": false,
+  "maxNotesLength": 1200
+}

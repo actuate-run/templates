@@ -1,0 +1,25 @@
+{
+  "name": "actuate-templates",
+  "private": true,
+  "type": "module",
+  "description": "First-party Actuate actuator templates.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "check": "for f in */actuator.ts; do actuate check $f || exit 1; done",
+    "typecheck": "tsc -p tsconfig.json",
+    "env-examples": "node scripts/env-examples.mjs"
+  },
+  "devDependencies": {
+    "@actuate/cli": "link:../actuate/packages/cli",
+    "@actuate/runtime": "link:../actuate/packages/runtime",
+    "@actuate/sdk": "link:../actuate/packages/sdk",
+    "@types/node": "^22.10.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7",
+    "@actuate/providers": "link:../actuate/packages/providers"
+  }
+}
