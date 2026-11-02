@@ -27,7 +27,7 @@ cd my-bot && npm install && npx actuate dev
 | `approver` | `"@shop_manager"` | Chat ID or email that receives the signed approve / reject links. |
 | `approvalTimeout` | `"24 hours"` | After this an undecided refund is DECLINED: `1 hour`, `24 hours` or `3 days`. |
 
-Capabilities: `payment` (a provider that supports refunds, such as Stripe or Chip) and `messaging` (delivers the approval link). Locally, `actuate dev`'s fake payment provider cannot refund, so put Stripe test keys in `.dev.vars` (see `.env.example`).
+Capabilities: `payment` (a provider that supports refunds, such as Stripe or Chip) and `messaging` (delivers the approval link). Locally, `actuate dev`'s fake payment provider prints each refund and always succeeds; to try a real provider, put Stripe test keys in `.dev.vars` (see `.env.example`).
 
 ## How an agent uses this
 
