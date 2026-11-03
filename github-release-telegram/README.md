@@ -22,9 +22,12 @@ Capability: `messaging` with the Telegram provider (a bot token from @BotFather)
 
 In your repository, go to **Settings → Webhooks → Add webhook**:
 
-- **Payload URL:** your actuator's `/webhook` URL with `?secret=<ACTUATE_WEBHOOK_SECRET>` appended.
+- **Payload URL:** your actuator's `/webhook` URL, as `actuate deploy` prints it. Nothing appended.
 - **Content type:** `application/json`.
+- **Secret:** your actuator's webhook secret (on the platform: the dashboard's **Connect** tab; self-hosted: `ACTUATE_WEBHOOK_SECRET`). GitHub signs every delivery with it (`X-Hub-Signature-256`) and the actuator checks the signature, so the secret itself never travels or lands in a log.
 - **Events:** "Let me select individual events" → **Releases** only.
+
+Don't put the secret in the URL as `?secret=`: URLs end up in logs, and the platform has deprecated it. If you set the hook up that way before, switch to the **Secret** field and rotate the webhook secret.
 
 Each delivery starts one run. Only `action: "published"` is announced; `created`, `edited`, `deleted` and the rest return `posted: false`. GitHub's initial `ping` delivery does not match the release schema and is rejected with a 400, which is harmless.
 
