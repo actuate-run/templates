@@ -9,17 +9,17 @@ importers:
   .:
     devDependencies:
       '@actuate/cli':
-        specifier: ^0.1.0
-        version: 0.1.1(@types/node@22.20.5)
+        specifier: ^0.3.0
+        version: 0.3.0(@types/node@22.20.5)
       '@actuate/providers':
-        specifier: ^0.1.0
-        version: 0.1.1
+        specifier: ^0.3.0
+        version: 0.3.0
       '@actuate/runtime':
-        specifier: ^0.1.0
-        version: 0.1.1
+        specifier: ^0.3.0
+        version: 0.3.0
       '@actuate/sdk':
-        specifier: ^0.1.0
-        version: 0.1.1
+        specifier: ^0.3.0
+        version: 0.3.0
       '@types/node':
         specifier: ^22.10.0
         version: 22.20.5
@@ -32,19 +32,19 @@ importers:
 
 packages:
 
-  '@actuate/cli@0.1.1':
-    resolution: {integrity: sha512-h2Mhjov6E2kmel9tmztB0Xp0kgpYKpZVQaYX3CpcPbCGPQFOR3/Ng/YsuzGLSNibQH0voL+uZl2mhyZ2G5GeyQ==}
+  '@actuate/cli@0.3.0':
+    resolution: {integrity: sha512-YulvvU69Qf7ZPAWUuGPxZGKibEfCY+3TLD7JSSvuDDGhQQ5HaZLkaNFJGmkOT580JJZjtQmZSzvH5bj7jfEWew==}
     engines: {node: '>=22'}
     hasBin: true
 
-  '@actuate/providers@0.1.1':
-    resolution: {integrity: sha512-WBWDGMD5CbfgNjq4WmtSgBWxdEerjdgl+MnGlvI098LEOiowgU4hC+G/UZ6s2Kc97e3yAhjcv+S609JK6KYZmQ==}
+  '@actuate/providers@0.3.0':
+    resolution: {integrity: sha512-S9Ke2Ni/JlhPssLBDukbe3uiF3KBxM28RAEoXRxMPZh0w1CxTOm8PZubmhRktuVgtPXeows1s46rnQ5LDStX8w==}
 
-  '@actuate/runtime@0.1.1':
-    resolution: {integrity: sha512-B4hReJ0pistDO8Ey/lY9v92H0ec3m+zOJh63KEXDDujcRnlFUs+LKIjk3FJ858+nx9Oh5vZ5bAIfN06Ngu/O1A==}
+  '@actuate/runtime@0.3.0':
+    resolution: {integrity: sha512-T5Y+EThGcZk+4eN6VxY2FcbHb8CUdcZWLQjlVNZo6i4EZttp9bEu4s2ib+CPsT4ZVWo/UGgVIsyXypvcZFyFrw==}
 
-  '@actuate/sdk@0.1.1':
-    resolution: {integrity: sha512-V3EB5uQDJQycE/OUbgMPzk24p7EjCaJqyA3l+OhnJakFG9MIhp2zM/HIRoDu6akkKNZhoCd1X797AE/WWTXgRg==}
+  '@actuate/sdk@0.3.0':
+    resolution: {integrity: sha512-q72Ui4P0aucCNSRe8C7iSuV3h4XOZsqwdkkDiBAEhtPw4dgHRVlEseJMxWGWc9P6mF3GPAI0T29+yROAS9cnJQ==}
 
   '@cloudflare/kv-asset-handler@0.5.0':
     resolution: {integrity: sha512-jxQYkj8dSIzc0cD6cMMNdOc1UVjqSqu8BZdor5s8cGjW2I8BjODt/kWPVdY+u9zj3ms75Q5qaZgnxUad83+eAg==}
@@ -780,8 +780,8 @@ packages:
     resolution: {integrity: sha512-ei8Aos7ja0weRpFzJnEA9UHJ/7XQmqglbRwnf2ATjcB9Wq874VKH9kfjjirM6UhU2/E5fFYadylyhFldcqSidQ==}
     engines: {node: '>=18'}
 
-  create-actuate@0.1.1:
-    resolution: {integrity: sha512-IrpNWHR0stf2gBvAaLlxgGa1S1m2O5WZzoGbsbR9rY2DUL9cD1rOHfm/iQNciYuvP6XiAfsoou9ERwY21DA89w==}
+  create-actuate@0.3.0:
+    resolution: {integrity: sha512-RZtRaiiFK9WAz0K8hnEXzzq3V+3imwYSHcJm0aNsT6MMHONdfsdxn3mdLZGwW5F1Vesd4YVpSLoooQ8Q3DgEQw==}
     engines: {node: '>=20'}
     hasBin: true
 
@@ -1080,12 +1080,12 @@ packages:
 
 snapshots:
 
-  '@actuate/cli@0.1.1(@types/node@22.20.5)':
+  '@actuate/cli@0.3.0(@types/node@22.20.5)':
     dependencies:
-      '@actuate/providers': 0.1.1
-      '@actuate/runtime': 0.1.1
-      '@actuate/sdk': 0.1.1
-      create-actuate: 0.1.1
+      '@actuate/providers': 0.3.0
+      '@actuate/runtime': 0.3.0
+      '@actuate/sdk': 0.3.0
+      create-actuate: 0.3.0
       esbuild: 0.25.12
       typescript: 5.9.3
       wrangler: 4.156.2(@types/node@22.20.5)
@@ -1095,16 +1095,16 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@actuate/providers@0.1.1':
+  '@actuate/providers@0.3.0':
     dependencies:
-      '@actuate/sdk': 0.1.1
+      '@actuate/sdk': 0.3.0
       zod: 4.6.7
 
-  '@actuate/runtime@0.1.1':
+  '@actuate/runtime@0.3.0':
     dependencies:
-      '@actuate/sdk': 0.1.1
+      '@actuate/sdk': 0.3.0
 
-  '@actuate/sdk@0.1.1':
+  '@actuate/sdk@0.3.0':
     dependencies:
       zod: 4.6.7
 
@@ -1581,7 +1581,7 @@ snapshots:
 
   cookie@1.1.1: {}
 
-  create-actuate@0.1.1: {}
+  create-actuate@0.3.0: {}
 
   debug@4.4.3:
     dependencies:
