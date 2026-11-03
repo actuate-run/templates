@@ -10,6 +10,7 @@ shop webhook {order: {...}} → upsert into orders          (refused unless it a
 ```sh
 npm create actuate my-bot -- --template order-status
 cd my-bot && npm install && npx actuate dev
+npx actuate test   # actuator.test.ts: fake providers and a test clock, no setup
 ```
 
 ## Configuration

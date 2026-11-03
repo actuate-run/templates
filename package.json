@@ -8,18 +8,18 @@
     "node": ">=22"
   },
   "scripts": {
-    "test": "vitest run",
-    "check": "for f in */actuator.ts; do actuate check $f || exit 1; done",
+    "test": "actuate test",
+    "check": "for f in */actuator.ts; do (cd \"$(dirname \"$f\")\" && actuate check --platform --plan maker) || exit 1; done",
     "typecheck": "tsc -p tsconfig.json",
     "env-examples": "node scripts/env-examples.mjs"
   },
   "devDependencies": {
-    "@actuate/cli": "^0.1.0",
-    "@actuate/runtime": "^0.1.0",
-    "@actuate/sdk": "^0.1.0",
+    "@actuate/cli": "^0.3.0",
+    "@actuate/runtime": "^0.3.0",
+    "@actuate/sdk": "^0.3.0",
     "@types/node": "^22.10.0",
     "typescript": "^5.9.3",
     "vitest": "^3.2.7",
-    "@actuate/providers": "^0.1.0"
+    "@actuate/providers": "^0.3.0"
   }
 }

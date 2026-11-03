@@ -12,6 +12,7 @@ save draft → waitForApproval("human-review") ─┬─ approved, no note → s
 ```sh
 npm create actuate my-bot -- --template approve-message
 cd my-bot && npm install && npx actuate dev
+npx actuate test   # actuator.test.ts: fake providers and a test clock, no setup
 ```
 
 ## Configuration

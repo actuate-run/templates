@@ -16,6 +16,7 @@ The model can never raise the cap: `maxRefund` and the order amount bound every 
 ```sh
 npm create actuate my-bot -- --template support-escalation
 cd my-bot && npm install && npx actuate dev
+npx actuate test   # actuator.test.ts: fake providers and a test clock, no setup
 ```
 
 ## Configuration

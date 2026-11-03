@@ -10,6 +10,7 @@ payment webhook → reconcile against expected_payments → upsert payments → 
 ```sh
 npm create actuate my-bot -- --template payment-reconciler
 cd my-bot && npm install && npx actuate dev
+npx actuate test   # actuator.test.ts: fake providers and a test clock, no setup
 ```
 
 ## Configuration

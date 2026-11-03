@@ -5,6 +5,7 @@ Posts a tidy Telegram message every time you publish a GitHub release: repositor
 ```sh
 npm create actuate my-bot -- --template github-release-telegram
 cd my-bot && npm install && npx actuate dev
+npx actuate test   # actuator.test.ts: fake providers and a test clock, no setup
 ```
 
 ## Configuration

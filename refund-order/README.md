@@ -5,16 +5,17 @@ An MCP tool that lets a support agent refund an order without being trusted with
 ```
 check-previous ─ already refunded? → ALREADY_REFUNDED
 amount = min(requested, maxRefund)
-amount > approvalThreshold → waitForApproval("manager") ─┬─ approved → refund → audit → REFUNDED
+amount > approvalThreshold → waitForApproval("manager") ─┬─ approved → refund + audit → REFUNDED
                                                          └─ rejected / expired → audit → DECLINED
-amount ≤ approvalThreshold → refund (idempotency key) → audit → REFUNDED
+amount ≤ approvalThreshold → refund + audit → REFUNDED
 ```
 
-Why not let the model call the payment API directly? Because the cap, the approval gate, the once-per-order rule and the audit row are all enforced here, and a retried tool call reuses the step's idempotency key, so the payment provider never refunds twice.
+Why not let the model call the payment API directly? Because the cap, the approval gate, the once-per-order rule and the audit row are all enforced here. A retried refund step sends the same idempotency key (the runtime derives it from the step), so a provider that honours it, such as Stripe, never refunds twice. The audit row is written with `ctx.db.commitWithStep`, in the same transaction that records the refund step as done, so the once-per-order check never misses a refund that went through.
 
 ```sh
 npm create actuate my-bot -- --template refund-order
 cd my-bot && npm install && npx actuate dev
+npx actuate test   # actuator.test.ts: fake providers and a test clock, no setup
 ```
 
 ## Configuration

@@ -15,6 +15,7 @@ While it waits, the run hibernates and costs nothing, whether that is two hours 
 ```sh
 npm create actuate my-bot -- --template deposit-reminder
 cd my-bot && npm install && npx actuate dev
+npx actuate test   # actuator.test.ts: fake providers and a test clock, no setup
 ```
 
 ## Configuration
@@ -52,7 +53,7 @@ curl -X POST localhost:8787/run -H 'content-type: application/json' -d '{
 | --- | --- | --- |
 | `payment.<runId>` | Your payment provider's webhook as a `PaymentEvent`. The bill's `referenceId` is the run ID. | `status: "paid"` confirms the booking; anything else counts as not paid yet. |
 
-Locally, `actuate dev` prints the payment link; opening it posts the `payment.<runId>` event, so you can click your way through the happy path. To test the reminder path, wait for `reminderDelay` or set it to `30 minutes`.
+Locally, `actuate dev` prints the payment link; opening it posts the `payment.<runId>` event, so you can click your way through the happy path. To try the reminder path, wait for `reminderDelay` or set it to `30 minutes`; `npx actuate test` runs both paths on a test clock.
 
 ## Data
 

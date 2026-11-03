@@ -12,5 +12,5 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["*/actuator.ts", "test/**/*.ts", "vitest.config.ts"]
+  "include": ["*/actuator.ts", "*/actuator.test.ts", "test/**/*.ts", "vitest.config.ts"]
 }

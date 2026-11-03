@@ -53,10 +53,11 @@ export default defineActuator({
 
     const amount = Math.min(input.amount, config.maxRefund); // hard cap
     const money = `${config.currency} ${amount.toFixed(2)}`;
-    const audit = (step: string, status: string, refundId: string | null, note: string | null) =>
-      ctx.step.do(step, ({ now }) =>
-        ctx.db.sql`INSERT INTO refunds VALUES (${orderId}, ${ctx.runId}, ${amount}, ${status}, ${refundId}, ${note}, ${now})`,
-      );
+    // Audit rows commit with their step's result: exactly once, even if the step is retried or the run replayed.
+    const audit = (status: "REFUNDED" | "DECLINED", refundId: string | null, note: string | null, at: number) =>
+      ctx.db.commitWithStep([
+        ctx.db.statement`INSERT INTO refunds VALUES (${orderId}, ${ctx.runId}, ${amount}, ${status}, ${refundId}, ${note}, ${at})`,
+      ]);
 
     let note: string | undefined;
     if (amount > config.approvalThreshold) {
@@ -68,23 +69,20 @@ export default defineActuator({
       note = ok?.note;
       if (!ok?.approved) {
         const why = ok === null ? "No decision before the approval expired." : (ok.note ?? "Rejected by the manager.");
-        await audit("audit-declined", "DECLINED", null, why);
+        await ctx.step.do("audit-declined", ({ now }) => audit("DECLINED", null, why, now));
         return { status: "DECLINED", orderId, note: why };
       }
     }
 
-    const refund = await ctx.step.do("refund", { retries: 3 }, async (step) => {
+    const refund = await ctx.step.do("refund", { retries: 3 }, async ({ now }) => {
       if (!ctx.payment.refund) throw new NonRetryableError("The configured payment provider cannot issue refunds.");
-      const result = await ctx.payment.refund({
-        billId: input.billId,
-        amount,
-        reason: input.reason || `Order ${orderId}`,
-        idempotencyKey: step.idempotencyKey,
-      });
+      // The runtime adds an idempotency key derived from this step, so a retry can't refund twice (Stripe honours it).
+      const result = await ctx.payment.refund({ billId: input.billId, amount, reason: input.reason || `Order ${orderId}` });
       if (result.status === "failed") throw new Error(`Refund ${result.id} failed at the payment provider.`);
+      // Committed with this step's result, so a completed refund is always seen by the once-per-order check.
+      audit("REFUNDED", result.id, note ?? null, now);
       return result;
     });
-    await audit("audit", "REFUNDED", refund.id, note ?? null);
     return { status: "REFUNDED", orderId, amount, refundId: refund.id, ...(note ? { note } : {}) };
   },
 });
