@@ -53,11 +53,10 @@ export default defineActuator({
 
     const amount = Math.min(input.amount, config.maxRefund); // hard cap
     const money = `${config.currency} ${amount.toFixed(2)}`;
-    // Audit rows commit with their step's result: exactly once, even if the step is retried or the run replayed.
-    const audit = (status: "REFUNDED" | "DECLINED", refundId: string | null, note: string | null, at: number) =>
-      ctx.db.commitWithStep([
-        ctx.db.statement`INSERT INTO refunds VALUES (${orderId}, ${ctx.runId}, ${amount}, ${status}, ${refundId}, ${note}, ${at})`,
-      ]);
+    // Audit rows commit with their step's result (commitWithStep, inside the step): exactly once, even if the step is
+    // retried or the run replayed.
+    const auditRow = (status: "REFUNDED" | "DECLINED", refundId: string | null, note: string | null, at: number) =>
+      ctx.db.statement`INSERT INTO refunds VALUES (${orderId}, ${ctx.runId}, ${amount}, ${status}, ${refundId}, ${note}, ${at})`;
 
     let note: string | undefined;
     if (amount > config.approvalThreshold) {
@@ -69,7 +68,7 @@ export default defineActuator({
       note = ok?.note;
       if (!ok?.approved) {
         const why = ok === null ? "No decision before the approval expired." : (ok.note ?? "Rejected by the manager.");
-        await ctx.step.do("audit-declined", ({ now }) => audit("DECLINED", null, why, now));
+        await ctx.step.do("audit-declined", ({ now }) => ctx.db.commitWithStep([auditRow("DECLINED", null, why, now)]));
         return { status: "DECLINED", orderId, note: why };
       }
     }
@@ -80,7 +79,7 @@ export default defineActuator({
       const result = await ctx.payment.refund({ billId: input.billId, amount, reason: input.reason || `Order ${orderId}` });
       if (result.status === "failed") throw new Error(`Refund ${result.id} failed at the payment provider.`);
       // Committed with this step's result, so a completed refund is always seen by the once-per-order check.
-      audit("REFUNDED", result.id, note ?? null, now);
+      ctx.db.commitWithStep([auditRow("REFUNDED", result.id, note ?? null, now)]);
       return result;
     });
     return { status: "REFUNDED", orderId, amount, refundId: refund.id, ...(note ? { note } : {}) };

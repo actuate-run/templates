@@ -85,8 +85,9 @@ describe("deposit-reminder", () => {
     const run = await t.start(input);
     await t.advance("1 second");
     expect(t.run(run.runId).status).toBe("WAITING"); // now waiting for the deposit
-    // Both attempts asked for the same bill; a provider that honours the key (Stripe) creates it once.
-    expect(t.bills.map((b) => b.idempotencyKey)).toEqual([`${run.runId}:send-payment-link:createBill:0`, `${run.runId}:send-payment-link:createBill:0`]);
+    // Both attempts asked for the same bill with the same key, so the provider (here the fake, as Stripe does) created it once.
+    expect(t.bills.map((b) => b.idempotencyKey)).toEqual([`${run.runId}:send-payment-link:createBill:0`]);
+    expect(sends).toBe(2);
   });
 
   it("rejects a malformed appointment time before running", async () => {

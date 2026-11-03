@@ -11,7 +11,7 @@ test("sends nothing until a person approves; a note on approval is their edited 
   const run = await t.start(call);
   assert.equal(run.status, "WAITING");
   assert.equal(t.messages.length, 0);
-  assert.ok(t.approvals[0]!.message?.includes(call.draft)); // the reviewer sees the draft
+  assert.ok(t.approvals[0]!.message.includes(call.draft)); // the reviewer sees the draft
 
   await t.approve("human-review", { note: "Sorry about the delay. Here is 10% off your next order." });
   assert.equal(t.messages[0]!.text, "Sorry about the delay. Here is 10% off your next order.");

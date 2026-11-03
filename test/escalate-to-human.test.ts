@@ -38,8 +38,10 @@ describe("escalate-to-human", () => {
     expect(t.run(run.runId).output).toEqual({ status: "TIMED_OUT", ticketId: run.runId });
     expect(t.rows("tickets")[0]).toMatchObject({ status: "TIMED_OUT", answer: null });
     // The link the person was sent, opened too late.
-    const token = new URL(t.approvals[0]!.answerUrl!).searchParams.get("token")!;
-    expect(await t.manager.decide(token, { text: "Too late" })).toMatchObject({ ok: false });
+    expect(await t.followLink(t.approvals[0]!.answerUrl!, { text: "Too late" })).toEqual({
+      ok: false,
+      reason: "This question has already been answered or has expired.",
+    });
     await expect(t.answer("Too late")).rejects.toThrow(/No question \(waitForInput\) is waiting/);
   });
 

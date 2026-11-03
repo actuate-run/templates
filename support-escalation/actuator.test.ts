@@ -11,7 +11,7 @@ test("refunds above the threshold only after a manager approves", async () => {
   const t = testActuator(actuator, { config, llm: [triage("refund", 100)] });
   const run = await t.start(ticket);
   assert.equal(run.status, "WAITING");
-  assert.match(t.approvals[0]!.message ?? "", /^Refund MYR 100.00 to Aina/);
+  assert.match(t.approvals[0]!.message, /^Refund MYR 100.00 to Aina/);
   assert.equal(t.refunds.length, 0);
 
   await t.approve("manager-approval");
