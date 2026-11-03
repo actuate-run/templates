@@ -13,6 +13,7 @@ The wait is one `waitForEvent({ event: "reply.<runId>", until: sendAt })`: it sl
 ```sh
 npm create actuate my-bot -- --template schedule-follow-up
 cd my-bot && npm install && npx actuate dev
+npx actuate test   # actuator.test.ts: fake providers and a test clock, no setup
 ```
 
 ## Configuration

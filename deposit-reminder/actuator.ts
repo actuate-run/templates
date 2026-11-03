@@ -45,14 +45,15 @@ export default defineActuator({
         VALUES (${bookingId}, ${input.customerName}, ${input.contact}, ${input.appointmentIso}, 'PENDING', ${new Date().toISOString()})`;
     });
 
-    const payUrl = await ctx.step.do("send-payment-link", { retries: 3 }, async ({ idempotencyKey }) => {
+    // The runtime gives createBill and send idempotency keys derived from this step, so a retry
+    // reuses the bill at providers that honour them (Stripe; the dev provider too).
+    const payUrl = await ctx.step.do("send-payment-link", { retries: 3 }, async () => {
       const bill = await ctx.payment.createBill({
         amount: config.depositAmount,
         currency: config.currency,
         referenceId: bookingId,
         description: `Deposit for ${config.businessName}, ${when}`,
         customer: { name: input.customerName },
-        idempotencyKey,
       });
       await ctx.db.sql`UPDATE bookings SET bill_id = ${bill.id} WHERE id = ${bookingId}`;
       await ctx.messaging.send(

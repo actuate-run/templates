@@ -10,6 +10,7 @@ create ticket → waitForInput("human-answer"): link to a text form ─┬─ an
 ```sh
 npm create actuate my-bot -- --template escalate-to-human
 cd my-bot && npm install && npx actuate dev
+npx actuate test   # actuator.test.ts: fake providers and a test clock, no setup
 ```
 
 ## Configuration

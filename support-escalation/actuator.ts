@@ -106,9 +106,10 @@ export default defineActuator({
     }
 
     const billId = input.billId;
-    const refund = await ctx.step.do("issue-refund", { retries: 3 }, async ({ idempotencyKey }) => {
+    // The runtime gives the refund an idempotency key derived from this step: a retry can't refund twice (Stripe honours it).
+    const refund = await ctx.step.do("issue-refund", { retries: 3 }, async () => {
       if (!ctx.payment.refund) return { id: "", status: "manual" as const };
-      return ctx.payment.refund({ billId, amount, reason: `Ticket ${input.ticketId}`, idempotencyKey });
+      return ctx.payment.refund({ billId, amount, reason: `Ticket ${input.ticketId}` });
     });
     await record("audit-refund", `refund:${refund.status}`, amount, refund.id);
     await reply(

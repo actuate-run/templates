@@ -13,6 +13,7 @@ The run hibernates between emails and costs nothing while it waits.
 ```sh
 npm create actuate my-bot -- --template lead-intake
 cd my-bot && npm install && npx actuate dev
+npx actuate test   # actuator.test.ts: fake providers and a test clock, no setup
 ```
 
 ## Configuration

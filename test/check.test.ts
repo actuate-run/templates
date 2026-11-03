@@ -38,6 +38,15 @@ describe("templates", () => {
       expect(lines).toBeLessThanOrEqual(max);
     });
 
+    it("ships a short actuator.test.ts that runs as is in a project made by npm create actuate", () => {
+      // create-actuate copies it next to actuator.ts, in a project with @actuate/sdk and @actuate/cli but no Vitest.
+      const test = readFileSync(join(dir, "actuator.test.ts"), "utf8");
+      const imports = [...test.matchAll(/^import .* from "([^"]+)";$/gm)].map((m) => m[1]);
+      expect(imports).toEqual(expect.arrayContaining(["node:test", "@actuate/cli/testing", "./actuator.js"]));
+      expect(imports.filter((i) => !["node:test", "node:assert/strict", "@actuate/cli/testing", "@actuate/sdk", "./actuator.js"].includes(i!))).toEqual([]);
+      expect(test.trimEnd().split("\n").length).toBeLessThanOrEqual(40);
+    });
+
     if (AGENT_TOOLS.includes(name)) {
       it("is an MCP-ready agent tool: object output schema and a model-facing description", async () => {
         const { default: actuator } = (await import(`../${name}/actuator.ts`)) as { default: Actuator };

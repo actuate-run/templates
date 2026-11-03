@@ -10,6 +10,7 @@ cron 0 1 * * *  → fix the 24 h window → count by type → send report → lo
 ```sh
 npm create actuate my-bot -- --template daily-report
 cd my-bot && npm install && npx actuate dev
+npx actuate test   # actuator.test.ts: fake providers and a test clock, no setup
 ```
 
 ## Configuration
