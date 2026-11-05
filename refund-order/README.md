@@ -3,14 +3,19 @@
 An MCP tool that lets a support agent refund an order without being trusted with the money. The model decides *that* a refund is warranted; this actuator decides *how much* and *whether a person must agree*, in code the model cannot change.
 
 ```
-check-previous ─ already refunded? → ALREADY_REFUNDED
 amount = min(requested, maxRefund)
+claim-order ─ already refunded? → ALREADY_REFUNDED
+            ─ another run is handling this order? → IN_PROGRESS
+            ─ otherwise: a PENDING row claims the order
 amount > approvalThreshold → waitForApproval("manager") ─┬─ approved → refund + audit → REFUNDED
                                                          └─ rejected / expired → audit → DECLINED
 amount ≤ approvalThreshold → refund + audit → REFUNDED
+refund fails for good → audit → FAILED (the order can be tried again)
 ```
 
 Why not let the model call the payment API directly? Because the cap, the approval gate, the once-per-order rule and the audit row are all enforced here. A retried refund step sends the same idempotency key (the runtime derives it from the step), so a provider that honours it, such as Stripe, never refunds twice. The audit row is written with `ctx.db.commitWithStep`, in the same transaction that records the refund step as done, so the once-per-order check never misses a refund that went through.
+
+The order is claimed before the approval wait, not after it. An MCP client that sends no idempotency key starts a new run for each retry, and two runs that both checked before waiting could both be approved and both refund. The claim is a `PENDING` row written in a step that does only database work, so no other run can claim the same order in between, and a second call returns `IN_PROGRESS` without asking the manager again. A claim older than the approval timeout plus an hour is treated as stale, so a run cancelled while it waited doesn't block the order forever. A refund that fails for good marks the claim `FAILED`, so the order can be tried again.
 
 ```sh
 npm create actuate my-bot -- --template refund-order
