@@ -55,8 +55,8 @@ export default defineActuator({
     // idempotencyKey catches a plain retry, but a call with its own explicit key, or one after this run is cancelled,
     // still starts a new run. So the run claims the order first: a PENDING row, written with this step's result. The
     // step does nothing but database work, so no other run can claim the same order in between, and a second run for
-    // the order is refused instead of waiting for its own approval and refunding twice. A claim older than the approval timeout plus an hour is stale
-    // (its run was cancelled or lost), so it doesn't block the order forever.
+    // the order is refused instead of waiting for its own approval and refunding twice. A claim older than the approval
+    // timeout plus an hour is stale (its run was cancelled or lost), so it doesn't block the order forever.
     const staleAfter = parseDuration(config.approvalTimeout) + 3_600_000;
     const claim = await ctx.step.do("claim-order", async ({ now }) => {
       const refunded = await ctx.db.first<{ amount: number }>(

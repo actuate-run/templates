@@ -58,7 +58,7 @@ Above it, the tool returns a receipt with status `WAITING` and a `runId`; the ag
 { "status": "DECLINED", "orderId": "2291", "note": "Ask for a photo first" }
 ```
 
-Calling the tool again for the same order returns the same run (see above), whether or not the client sends an idempotency key. A client that does send one (an `Idempotency-Key` header, or `_meta["run.actuate/idempotencyKey"]` over MCP) is matched on that key alone, at any status; sending a new key is how you force a new run, which the once-per-order check then refuses if the order was already refunded.
+Calling the tool again for the same order without an idempotency key returns the same run (see above). A client that does send one (an `Idempotency-Key` header, or `_meta["run.actuate/idempotencyKey"]` over MCP) is matched on that key alone, at any status; sending a new key is how you force a new run, which the once-per-order check then refuses if the order was already refunded.
 
 The tool is annotated `destructive` and `openWorld` (it moves money), so MCP clients that ask a person before such calls will. The declared key also marks it `idempotent`: calling it twice with the same order has no further effect.
 
