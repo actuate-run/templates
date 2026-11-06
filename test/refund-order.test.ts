@@ -70,20 +70,53 @@ describe("refund-order", () => {
     });
     const run = await t.start({ ...call, amount: 20 });
     expect(t.run(run.runId).status).toBe("WAITING"); // backing off before the retry
-    expect(t.rows("refunds")).toEqual([]);
+    expect(t.rows("refunds")).toEqual([expect.objectContaining({ status: "PENDING", refund_id: null })]); // the order's claim
     await t.advance("10 seconds"); // 1 s, then 2 s of backoff
     expect(t.run(run.runId).output).toEqual({ status: "REFUNDED", orderId: "2291", amount: 20, refundId: "re_3" });
     expect(new Set(keys)).toEqual(new Set([`${run.runId}:refund:refund:0`]));
     expect(t.rows("refunds")).toEqual([expect.objectContaining({ status: "REFUNDED", refund_id: "re_3" })]);
   });
 
-  it("records nothing when every attempt fails, so a later call can still refund", async () => {
-    const t = setup({ ...noBills, refund: async () => ({ id: "re_x", status: "failed" }) });
+  it("releases the order when every attempt fails, so a later call can still refund", async () => {
+    let fail = true;
+    const t = setup({ ...noBills, refund: async () => (fail ? { id: "re_x", status: "failed" } : { id: "re_ok", status: "succeeded" }) });
     const run = await t.start({ ...call, amount: 20 });
     await t.advance("1 minute");
     expect(t.run(run.runId)).toMatchObject({ status: "FAILED", error: { message: "Refund re_x failed at the payment provider." } });
     expect(t.steps(run.runId).find((s) => s.name === "refund")).toMatchObject({ status: "FAILED", attempts: 4 });
-    expect(t.rows("refunds")).toEqual([]);
+    expect(t.rows("refunds")).toEqual([expect.objectContaining({ status: "FAILED", note: "Refund re_x failed at the payment provider." })]);
+
+    fail = false;
+    expect((await t.start({ ...call, amount: 20 })).output).toEqual({ status: "REFUNDED", orderId: "2291", amount: 20, refundId: "re_ok" });
+  });
+
+  it("claims the order before the approval wait, so overlapping calls can't both refund", async () => {
+    // A client that sends no idempotency key starts a new run for each retry.
+    const t = setup();
+    const first = await t.start(call);
+    const second = await t.start(call);
+    expect(first.status).toBe("WAITING");
+    expect(second.output).toEqual({ status: "IN_PROGRESS", orderId: "2291", note: `Run ${first.runId} is already handling a refund for this order.` });
+    expect(t.approvals).toHaveLength(1); // the manager is asked once
+
+    await t.approve("manager");
+    expect(t.run(first.runId).output).toMatchObject({ status: "REFUNDED" });
+    expect((await t.start(call)).output).toEqual({ status: "ALREADY_REFUNDED", orderId: "2291", amount: 120 });
+    expect(t.refunds).toHaveLength(1);
+  });
+
+  it("stops a claim left by a cancelled run from blocking the order once it is stale", async () => {
+    const t = setup();
+    const first = await t.start(call);
+    t.manager.cancel(first.runId); // e.g. an agent cancelled it while it waited
+    expect((await t.start(call)).output).toMatchObject({ status: "IN_PROGRESS" });
+
+    await t.advance("25 hours"); // the 24-hour approval timeout, plus an hour
+    const later = await t.start(call);
+    expect(later.status).toBe("WAITING");
+    await t.approve("manager", { runId: later.runId });
+    expect(t.run(later.runId).output).toMatchObject({ status: "REFUNDED" });
+    expect(t.refunds).toHaveLength(1);
   });
 
   it("fails loudly when the payment provider cannot refund", async () => {
