@@ -20,7 +20,7 @@ npx actuate test   # actuator.test.ts: fake providers and a test clock, no setup
 | `humanContact` | required | Chat ID or email of the person or team chat that answers. |
 | `answerTimeout` | `"4 hours"` | How long to wait: `15 minutes`, `1 hour`, `4 hours` or `24 hours`. |
 
-Capability: `messaging`, which delivers the answer link (Telegram, WhatsApp or email).
+Capability: `messaging`, which delivers the answer link (Telegram, WhatsApp, email, or a custom webhook, whose standard body carries it as `approval.answerUrl`). The link lets whoever reads it answer, so point it at a person, not at an agent.
 
 ## How an agent uses this
 
