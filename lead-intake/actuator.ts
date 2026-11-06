@@ -25,14 +25,11 @@ export default defineActuator({
   name: "lead_intake",
   description:
     "Hand over a sales lead. Saves it, sends a welcome email now and one follow-up after two days, and stops " +
-    "the moment the lead replies. Call it once per lead with their name, a valid email and what they asked about; " +
-    "calling it again for the same email while its emails are still going out returns the same run. " +
+    "the moment the lead replies. Call it once per lead with their name, a valid email and what they asked about. " +
     "It returns WAITING immediately; the final result is REPLIED or COLD after up to a week.",
   config: ConfigSchema,
   input: InputSchema,
   output: OutputSchema,
-  // A repeat call for the same email returns the lead's run instead of emailing them a second sequence.
-  idempotencyKey: ["email"],
   capabilities: ["messaging"],
   hints: { openWorld: true },
   async run(ctx, { name, email, interest }, config): Promise<z.output<typeof OutputSchema>> {
