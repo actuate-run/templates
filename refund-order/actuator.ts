@@ -31,11 +31,14 @@ export default defineActuator({
     "Refund a customer's order. Call this when a refund is warranted; do not promise a refund before it returns. " +
     "The amount is capped by the business, refunds above a threshold wait for a manager's approval (the call " +
     "then returns status WAITING; poll actuate_get_run), and each order can be refunded only once. " +
+    "Calling it again for the same order returns the same run. " +
     "Returns REFUNDED with the amount actually refunded, DECLINED with a note, ALREADY_REFUNDED, or IN_PROGRESS " +
-    "when another call for the same order is still waiting for approval.",
+    "when another run for the same order is still waiting for approval.",
   config: ConfigSchema,
   input: InputSchema,
   output: OutputSchema,
+  // A call without an idempotency key gets one from orderId: a retry returns the run already handling the order.
+  idempotencyKey: ["orderId"],
   // messaging delivers the manager's approval link.
   capabilities: ["payment", "messaging"],
   hints: { destructive: true, openWorld: true },
@@ -49,10 +52,10 @@ export default defineActuator({
     const amount = Math.min(input.amount, config.maxRefund); // hard cap
     const money = `${config.currency} ${amount.toFixed(2)}`;
 
-    // Agents retry and rephrase, and a client without an idempotency key starts a new run for each retry. So the run
-    // claims the order first: a PENDING row, written with this step's result. The step does nothing but database work,
-    // so no other run can claim the same order in between, and a second call for the order is refused instead of
-    // waiting for its own approval and refunding twice. A claim older than the approval timeout plus an hour is stale
+    // idempotencyKey catches a plain retry, but a call with its own explicit key, or one after this run is cancelled,
+    // still starts a new run. So the run claims the order first: a PENDING row, written with this step's result. The
+    // step does nothing but database work, so no other run can claim the same order in between, and a second run for
+    // the order is refused instead of waiting for its own approval and refunding twice. A claim older than the approval timeout plus an hour is stale
     // (its run was cancelled or lost), so it doesn't block the order forever.
     const staleAfter = parseDuration(config.approvalTimeout) + 3_600_000;
     const claim = await ctx.step.do("claim-order", async ({ now }) => {
