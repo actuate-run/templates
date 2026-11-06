@@ -10,7 +10,7 @@ npx actuate test   # the template's own actuator.test.ts
 
 ## Agent tools
 
-Small, MCP-first tools an AI agent calls. Each one is the deterministic half of an agent: the model decides *what* should happen, and the actuator decides *how*, with caps, approvals, validation and an audit trail the model cannot change. Every tool has an `output` schema, so MCP clients get `structuredContent`, and MCP `hints` (read-only, destructive, open-world) so clients know which calls need a person's OK.
+Small, MCP-first tools an AI agent calls. Each one is the deterministic half of an agent: the model decides *what* should happen, and the actuator decides *how*, with caps, approvals, validation and an audit trail the model cannot change. Every tool has an `output` schema, so MCP clients get `structuredContent`, and MCP `hints` (read-only, destructive, open-world) so clients know which calls need a person's OK. `refund-order` and `lead-intake` also declare an `idempotencyKey` (the order ID, the lead's email), so a retried call that sends no idempotency key returns the run already handling it instead of acting twice.
 
 | Template | Tool | What it does | Leans on |
 | --- | --- | --- | --- |
