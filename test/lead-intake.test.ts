@@ -47,6 +47,23 @@ describe("lead-intake", () => {
     expect(t.usage(run.runId).passes).toBe(3); // start, day 3, day 7: it hibernates in between
   });
 
+  it("returns the same run for the same email while it runs, and for 24 hours after", async () => {
+    const t = setup();
+    const run = await t.start(lead);
+    const again = await t.start({ ...lead, name: "Mei Lin", interest: "Group classes?" }); // only email is in the key
+    expect(again.runId).toBe(run.runId);
+    expect(t.rows("leads")).toHaveLength(1);
+    expect(t.messages).toHaveLength(1); // one welcome email
+    expect((await t.start({ ...lead, email: "aina@example.com" })).runId).not.toBe(run.runId);
+
+    await t.advance("6 days"); // both leads go COLD
+    expect((await t.start(lead)).runId).toBe(run.runId);
+    await t.advance("25 hours");
+    const later = await t.start(lead); // a completed run matches for 24 hours only
+    expect(later.runId).not.toBe(run.runId);
+    expect(later.status).toBe("WAITING");
+  });
+
   it("rejects an invalid email before anything runs", async () => {
     await expect(setup().start({ ...lead, email: "not-an-email" })).rejects.toThrow(/email/);
   });

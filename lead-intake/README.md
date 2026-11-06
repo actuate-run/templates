@@ -37,7 +37,9 @@ The email is validated before anything runs, so a made-up address is rejected wi
 { "leadId": "run_019a...", "status": "REPLIED" }
 ```
 
-The tool is annotated `openWorld` (it emails people) and not `idempotent`: calling it twice starts two sequences.
+The actuator declares `idempotencyKey: ["email"]`, so a call that sends no idempotency key of its own gets one made from the email address. Calling the tool again for the same email, while that lead's emails are still going out or within 24 hours after the run ended, returns the same run: the lead is saved once and never gets a second welcome email. A failed or cancelled run never matches. The key uses the email exactly as sent, so `Mei@example.com` and `mei@example.com` count as two leads. To start a new sequence anyway, send a new explicit idempotency key.
+
+The tool is annotated `openWorld` (it emails people), and the declared key also marks it `idempotent`.
 
 ## Events it waits for
 
