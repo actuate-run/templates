@@ -31,7 +31,7 @@ Set in `actuate.config.json` locally, or in the dashboard once deployed.
 | `holdAfterReminder` | `"24 hours"` | How much longer the slot is held after the reminder before it is released. |
 | `timeZone` | `"Asia/Kuala_Lumpur"` | Used to format the appointment time in messages. |
 
-Capabilities: `payment` (Stripe, Chip, ToyyibPay or Billplz) and `messaging` (Telegram or WhatsApp). Credentials are listed in `.env.example`.
+Capabilities: `payment` (Stripe, Chip, ToyyibPay or Billplz) and `messaging` (Telegram, WhatsApp, or a custom webhook into your own messaging system). Credentials are listed in `.env.example`.
 
 ## Triggering a run
 
@@ -45,7 +45,7 @@ curl -X POST localhost:8787/run -H 'content-type: application/json' -d '{
 }'
 ```
 
-`contact` is a phone number for WhatsApp or a chat ID for Telegram. Once deployed, send the same JSON to the actuator's `/webhook` URL with your `x-actuate-secret` header.
+`contact` is a phone number for WhatsApp, a chat ID for Telegram, or whatever your custom webhook reads as `to`. Once deployed, send the same JSON to the actuator's `/webhook` URL with your `x-actuate-secret` header.
 
 ## Events it waits for
 

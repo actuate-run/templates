@@ -25,7 +25,7 @@ npx actuate test   # actuator.test.ts: fake providers and a test clock, no setup
 
 The schedule is `cron: ["0 1 * * *"]` in `actuator.ts` (cron runs in UTC; 01:00 UTC is 09:00 MYT). Change it there.
 
-Capability: `messaging` (Telegram, WhatsApp, or email via Resend).
+Capability: `messaging` (Telegram, WhatsApp, email via Resend, or a custom webhook to any URL).
 
 ## Triggering a run
 

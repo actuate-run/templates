@@ -3,6 +3,7 @@
 An MCP tool that lets a support agent refund an order without being trusted with the money. The model decides *that* a refund is warranted; this actuator decides *how much* and *whether a person must agree*, in code the model cannot change.
 
 ```
+same orderId as a run still going, or one completed in the last 24 hours → that run, nothing new starts
 amount = min(requested, maxRefund)
 claim-order ─ already refunded? → ALREADY_REFUNDED
             ─ another run is handling this order? → IN_PROGRESS
@@ -15,7 +16,9 @@ refund fails for good → audit → FAILED (the order can be tried again)
 
 Why not let the model call the payment API directly? Because the cap, the approval gate, the once-per-order rule and the audit row are all enforced here. A retried refund step sends the same idempotency key (the runtime derives it from the step), so a provider that honours it, such as Stripe, never refunds twice. The audit row is written with `ctx.db.commitWithStep`, in the same transaction that records the refund step as done, so the once-per-order check never misses a refund that went through.
 
-The order is claimed before the approval wait, not after it. An MCP client that sends no idempotency key starts a new run for each retry, and two runs that both checked before waiting could both be approved and both refund. The claim is a `PENDING` row written in a step that does only database work, so no other run can claim the same order in between, and a second call returns `IN_PROGRESS` without asking the manager again. A claim older than the approval timeout plus an hour is treated as stale, so a run cancelled while it waited doesn't block the order forever. A refund that fails for good marks the claim `FAILED`, so the order can be tried again.
+The actuator declares `idempotencyKey: ["orderId"]`. A call that sends no idempotency key of its own gets one made from the order ID, so a retried or rephrased call for the same order returns the run already handling it: one that is still running or waiting for the manager, or one that completed in the last 24 hours. A failed or cancelled run never matches, so the order can be tried again. The key is made from `orderId` exactly as the agent sends it.
+
+The order is still claimed before the approval wait, not after it, because the key doesn't cover every case: a call with its own explicit idempotency key is matched on that key alone, and a cancelled run frees the key. Two runs that both checked before waiting could both be approved and both refund. The claim is a `PENDING` row written in a step that does only database work, so no other run can claim the same order in between, and a second run returns `IN_PROGRESS` without asking the manager again. A claim older than the approval timeout plus an hour is treated as stale, so a run cancelled while it waited doesn't block the order forever. A refund that fails for good marks the claim `FAILED`, so the order can be tried again.
 
 ```sh
 npm create actuate my-bot -- --template refund-order
@@ -55,9 +58,9 @@ Above it, the tool returns a receipt with status `WAITING` and a `runId`; the ag
 { "status": "DECLINED", "orderId": "2291", "note": "Ask for a photo first" }
 ```
 
-Send an `Idempotency-Key` with the call (MCP clients that retry do) and a retried call returns the first run's result instead of starting another.
+Calling the tool again for the same order without an idempotency key returns the same run (see above). A client that does send one (an `Idempotency-Key` header, or `_meta["run.actuate/idempotencyKey"]` over MCP) is matched on that key alone, at any status; sending a new key is how you force a new run, which the once-per-order check then refuses if the order was already refunded.
 
-The tool is annotated `destructive` and `openWorld` (it moves money), so MCP clients that ask a person before such calls will. It is not marked `idempotent`; the once-per-order check is a safeguard, not a promise.
+The tool is annotated `destructive` and `openWorld` (it moves money), so MCP clients that ask a person before such calls will. The declared key also marks it `idempotent`: calling it twice with the same order has no further effect.
 
 ## What it waits for
 
@@ -67,6 +70,6 @@ The tool is annotated `destructive` and `openWorld` (it moves money), so MCP cli
 
 ## Data
 
-Table `refunds`: `order_id`, `run_id`, `amount`, `status` (`REFUNDED` or `DECLINED`), `refund_id`, `note`, `at`. It is both the audit log and the once-per-order check.
+Table `refunds`: `order_id`, `run_id`, `amount`, `status` (`PENDING` while a run holds the order, then `REFUNDED`, `DECLINED` or `FAILED`), `refund_id`, `note`, `at`. It is both the audit log and the once-per-order check.
 
 The landing page's "Refunds" flow is an excerpt of this file. For a version where an LLM also triages the customer's message, see [`support-escalation`](../support-escalation).

@@ -52,10 +52,26 @@ describe("refund-order", () => {
     expect(t.refunds[0]!.amount).toBe(500);
   });
 
-  it("refuses a second refund for the same order", async () => {
+  it("returns the same run for a duplicate call without an idempotency key", async () => {
     const t = setup();
-    await t.start({ ...call, amount: 30 });
-    expect((await t.start({ ...call, amount: 40 })).output).toEqual({ status: "ALREADY_REFUNDED", orderId: "2291", amount: 30 });
+    const first = await t.start(call);
+    const retry = await t.start({ ...call, amount: 90, reason: "Rephrased" }); // only orderId is in the key
+    expect(retry.runId).toBe(first.runId);
+    expect(t.approvals).toHaveLength(1); // the manager is asked once
+    expect((await t.start({ ...call, orderId: "2292" })).runId).not.toBe(first.runId); // another order, another run
+
+    await t.approve("manager", { runId: first.runId });
+    expect((await t.start(call)).output).toMatchObject({ status: "REFUNDED", amount: 120 }); // completed, still the same run
+    expect(t.refunds).toHaveLength(1);
+  });
+
+  it("refuses a second refund for the same order once the key has expired", async () => {
+    const t = setup();
+    const first = await t.start({ ...call, amount: 30 });
+    await t.advance("25 hours"); // a completed run matches the derived key for 24 hours
+    const later = await t.start({ ...call, amount: 40 });
+    expect(later.runId).not.toBe(first.runId);
+    expect(later.output).toEqual({ status: "ALREADY_REFUNDED", orderId: "2291", amount: 30 });
     expect(t.refunds).toHaveLength(1);
   });
 
@@ -77,7 +93,7 @@ describe("refund-order", () => {
     expect(t.rows("refunds")).toEqual([expect.objectContaining({ status: "REFUNDED", refund_id: "re_3" })]);
   });
 
-  it("releases the order when every attempt fails, so a later call can still refund", async () => {
+  it("releases the order and the key when every attempt fails, so a retry can still refund", async () => {
     let fail = true;
     const t = setup({ ...noBills, refund: async () => (fail ? { id: "re_x", status: "failed" } : { id: "re_ok", status: "succeeded" }) });
     const run = await t.start({ ...call, amount: 20 });
@@ -87,28 +103,30 @@ describe("refund-order", () => {
     expect(t.rows("refunds")).toEqual([expect.objectContaining({ status: "FAILED", note: "Refund re_x failed at the payment provider." })]);
 
     fail = false;
-    expect((await t.start({ ...call, amount: 20 })).output).toEqual({ status: "REFUNDED", orderId: "2291", amount: 20, refundId: "re_ok" });
+    const retry = await t.start({ ...call, amount: 20 }); // a failed run never matches the derived key
+    expect(retry.runId).not.toBe(run.runId);
+    expect(retry.output).toEqual({ status: "REFUNDED", orderId: "2291", amount: 20, refundId: "re_ok" });
   });
 
-  it("claims the order before the approval wait, so overlapping calls can't both refund", async () => {
-    // A client that sends no idempotency key starts a new run for each retry.
+  it("claims the order before the approval wait, so overlapping calls with their own keys can't both refund", async () => {
+    // An explicit idempotency key is used alone, so two calls with different keys start two runs.
     const t = setup();
-    const first = await t.start(call);
-    const second = await t.start(call);
+    const first = await t.start(call, { idempotencyKey: "a" });
+    const second = await t.start(call, { idempotencyKey: "b" });
     expect(first.status).toBe("WAITING");
     expect(second.output).toEqual({ status: "IN_PROGRESS", orderId: "2291", note: `Run ${first.runId} is already handling a refund for this order.` });
     expect(t.approvals).toHaveLength(1); // the manager is asked once
 
     await t.approve("manager");
     expect(t.run(first.runId).output).toMatchObject({ status: "REFUNDED" });
-    expect((await t.start(call)).output).toEqual({ status: "ALREADY_REFUNDED", orderId: "2291", amount: 120 });
+    expect((await t.start(call, { idempotencyKey: "c" })).output).toEqual({ status: "ALREADY_REFUNDED", orderId: "2291", amount: 120 });
     expect(t.refunds).toHaveLength(1);
   });
 
   it("stops a claim left by a cancelled run from blocking the order once it is stale", async () => {
     const t = setup();
     const first = await t.start(call);
-    t.manager.cancel(first.runId); // e.g. an agent cancelled it while it waited
+    t.manager.cancel(first.runId); // e.g. an agent cancelled it while it waited; that frees the derived key
     expect((await t.start(call)).output).toMatchObject({ status: "IN_PROGRESS" });
 
     await t.advance("25 hours"); // the 24-hour approval timeout, plus an hour

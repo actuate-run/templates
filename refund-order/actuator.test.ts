@@ -16,9 +16,12 @@ test("waits for a manager above the threshold, then refunds once", async () => {
   assert.deepEqual(t.run(run.runId).output, { status: "REFUNDED", orderId: "2291", amount: 120, refundId: "refund-1" });
   assert.equal(t.rows("refunds")[0]!.status, "REFUNDED"); // the audit row
 
-  // The agent retries: the same order is never refunded twice.
-  const again = await t.start({ ...call, amount: 40 });
-  assert.deepEqual(again.output, { status: "ALREADY_REFUNDED", orderId: "2291", amount: 120 });
+  // The agent retries without an idempotency key: the key from orderId returns the same run.
+  assert.equal((await t.start({ ...call, amount: 40 })).runId, run.runId);
+  // A day later the key has expired, and the once-per-order check refuses a second refund.
+  await t.advance("25 hours");
+  const later = await t.start({ ...call, amount: 40 });
+  assert.deepEqual(later.output, { status: "ALREADY_REFUNDED", orderId: "2291", amount: 120 });
   assert.equal(t.refunds.length, 1);
 });
 
