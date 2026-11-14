@@ -101,9 +101,12 @@ export default defineActuator({
     let refund;
     try {
       refund = await ctx.step.do("refund", { retries: 3 }, async ({ now }) => {
-        if (!ctx.payment.refund) throw new NonRetryableError("The configured payment provider cannot issue refunds.");
         // The runtime adds an idempotency key derived from this step, so a retry can't refund twice (Stripe honours it).
-        const result = await ctx.payment.refund({ billId: input.billId, amount, reason: input.reason || `Order ${orderId}` });
+        const result = await ctx.payment.refund!({ billId: input.billId, amount, reason: input.reason || `Order ${orderId}` }).catch((err: unknown) => {
+          // A provider with no refund API (Billplz, ToyyibPay) says so with a NotSupportedError. Retrying can't help.
+          if ((err as Error | undefined)?.name === "NotSupportedError") throw new NonRetryableError("The configured payment provider cannot issue refunds.");
+          throw err;
+        });
         if (result.status === "failed") throw new Error(`Refund ${result.id} failed at the payment provider.`);
         // Committed with this step's result, so a completed refund is always seen by the once-per-order check.
         ctx.db.commitWithStep([auditRow("REFUNDED", result.id, note ?? null, now)]);
