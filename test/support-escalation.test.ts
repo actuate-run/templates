@@ -101,7 +101,12 @@ describe("support-escalation", () => {
   });
 
   it("falls back to a manual refund when the payment provider cannot refund", async () => {
-    const t = setup(triage("refund", 20), { createBill: () => Promise.reject(new Error("not used")), getBill: () => Promise.reject(new Error("not used")) });
+    // As Billplz and ToyyibPay answer: the method is there, and throws a NotSupportedError.
+    const t = setup(triage("refund", 20), {
+      createBill: () => Promise.reject(new Error("not used")),
+      getBill: () => Promise.reject(new Error("not used")),
+      refund: () => Promise.reject(Object.assign(new Error("refund is not supported by Billplz"), { name: "NotSupportedError" })),
+    });
     const run = await t.start(ticket);
     expect(run.output).toMatchObject({ outcome: "REFUNDED", refundStatus: "manual" });
     expect(t.messages.at(-1)!.text).toMatch(/processed by our team/);

@@ -137,9 +137,12 @@ describe("refund-order", () => {
     expect(t.refunds).toHaveLength(1);
   });
 
-  it("fails loudly when the payment provider cannot refund", async () => {
-    const t = setup(noBills);
+  it("fails loudly when the payment provider cannot refund, without retrying", async () => {
+    // As Billplz and ToyyibPay answer: the method is there, and throws a NotSupportedError.
+    const t = setup({ ...noBills, refund: () => Promise.reject(Object.assign(new Error("refund is not supported by Billplz"), { name: "NotSupportedError" })) });
     const run = await t.start({ ...call, amount: 10 });
     expect(run).toMatchObject({ status: "FAILED", error: { message: expect.stringMatching(/cannot issue refunds/) } });
+    expect(t.steps(run.runId).find((s) => s.name === "refund")).toMatchObject({ status: "FAILED", attempts: 1 });
+    expect(t.rows("refunds")).toEqual([expect.objectContaining({ status: "FAILED" })]);
   });
 });

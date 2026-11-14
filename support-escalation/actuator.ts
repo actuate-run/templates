@@ -108,8 +108,14 @@ export default defineActuator({
     const billId = input.billId;
     // The runtime gives the refund an idempotency key derived from this step: a retry can't refund twice (Stripe honours it).
     const refund = await ctx.step.do("issue-refund", { retries: 3 }, async () => {
-      if (!ctx.payment.refund) return { id: "", status: "manual" as const };
-      return ctx.payment.refund({ billId, amount, reason: `Ticket ${input.ticketId}` });
+      try {
+        return await ctx.payment.refund!({ billId, amount, reason: `Ticket ${input.ticketId}` });
+      } catch (err) {
+        // A provider with no refund API (Billplz, ToyyibPay) says so with a NotSupportedError: the team refunds by hand.
+        // Checked by name, and inside the step, so the outcome is stored and every replay sees the same one.
+        if ((err as Error | undefined)?.name === "NotSupportedError") return { id: "", status: "manual" as const };
+        throw err;
+      }
     });
     await record("audit-refund", `refund:${refund.status}`, amount, refund.id);
     await reply(
